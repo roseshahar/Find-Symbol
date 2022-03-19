@@ -32,7 +32,7 @@ for file_path in $(find $dir -type f -print) ; do
 		continue;
 	fi
 	
-	# Readl exported symbols. Ignore table header with `tail`.
+	# Read exported symbols. Ignore table header with `tail`.
     readelf -Ws "$file_path" | tail -n +4 | while read num value size type bind vix index name dummy ; do
         if [ $size = 0 ]; then continue; fi  # Ignore symbols with size 0.
 		if [ $bind != "GLOBAL" ]; then continue; fi
