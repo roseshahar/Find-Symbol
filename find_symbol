@@ -1,0 +1,45 @@
+#!/bin/bash
+
+display_usage() { 
+	echo "Find symbols in all ELFs/SOs in a directory." 
+	echo -e "\nUsage: $0 directory_path symbol_name \n" 
+	echo -e "    $0 ./lib/ strcpy*"
+} 
+# if less than two arguments supplied, display usage 
+if [  $# -le 1 ] 
+then 
+	display_usage
+	exit 1
+fi 
+
+# check whether user had supplied -h or --help . If yes display usage 
+if [[ ( $# == "--help") ||  $# == "-h" ]] 
+then 
+	display_usage
+	exit 0
+fi 
+
+dir=$1
+symbol_name=$2
+
+# Iterate recursively over given path.
+for file_path in $(find $dir -type f -print) ; do
+
+	# Validate that the file is an ELF.
+	file_type=$(file -ib $file_path | cut -f1 -d '/')
+	if [ $file_type != "application" ]
+	then
+		continue;
+	fi
+	
+	# Readl exported symbols. Ignore table header with `tail`.
+    readelf -Ws "$file_path" | tail -n +4 | while read num value size type bind vix index name dummy ; do
+        if [ $size = 0 ]; then continue; fi  # Ignore symbols with size 0.
+		if [ $bind != "GLOBAL" ]; then continue; fi
+		
+        case "$name" in
+            $symbol_name) echo "$file_path: $name"
+                    ;;
+        esac
+    done
+done
